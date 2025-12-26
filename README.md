@@ -185,4 +185,4 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 ## License
 
-This project is licensed under the MIT License and can be freely used for commercial and non-commercial purposes.
+MIT License

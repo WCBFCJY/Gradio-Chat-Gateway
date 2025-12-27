@@ -136,7 +136,7 @@ async def list_models():
     """模型列表接口（不需要 Token 即可查看支持列表）"""
     return {
         "object": "list",
-        "data": [{"id": m_id, "object": "model", "created": int(time.time()), "owned_by": "none"} for m_id in MODEL_CONFIG.keys()]
+        "data": [{"id": m_id, "object": "model", "created": int(time.time())} for m_id in MODEL_CONFIG.keys()]
     }
 
 @app.post("/v1/chat/completions")

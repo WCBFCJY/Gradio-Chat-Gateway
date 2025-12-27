@@ -83,7 +83,7 @@ MODEL_CONFIG = {
 **配置步骤：**
 
 1. 在 Hugging Face Spaces 找到目标模型
-2. 查看其 API 文档，确定输入格式和参数支持
+2. 查看其 API 文档，确定API端点、输入格式及参数支持情况
 3. 根据文档选择合适的 flags 组合
 4. 测试验证
 
@@ -92,16 +92,16 @@ MODEL_CONFIG = {
 每个模型使用两位 `flags` 参数标识 API 调用特性：
 
 **第一位（输入格式）：**
-- `0`: `message` + `system_message` 分离
-- `1`: `input_data` + `system_prompt`
-- `2`: `message` 对象（含 text/files）+ `system_prompt`
-- `3`: `message` 对象（拼接 system 和 user）
-- `4`: `message` 字符串（拼接）
+- `0`: `message (str)` + `system_message (str)`
+- `1`: `input_data (str)` + `system_prompt (str)`
+- `2`: `message (dict)` + `system_prompt (str)`
+- `3`: `message (dict)`（system 和 user）
+- `4`: `message (str)`（system 和 user）
 
-**第二位（参数支持）：**
-- `0`: 不附加高级参数
-- `1`: 完整参数（temperature, top_p, top_k, repetition_penalty）
-- `2`: 仅 max_tokens
+**第二位（附加参数）：**
+- `0`: 不附加其它参数
+- `1`: 完整参数 `temperature, top_p, top_k, repetition_penalty`
+- `2`: 仅 `max_tokens`
 
 示例配置：
 ```python
@@ -200,4 +200,5 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 

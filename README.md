@@ -117,19 +117,14 @@ pip install fastapi uvicorn gradio_client pydantic anyio httpx[socks]
 python Gradio-Chat-Gateway.py
 ```
 
-### 3. Docker Deployment (Recommended)
-```dockerfile
-FROM python:3.10-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY Gradio-Chat-Gateway.py .
-CMD ["python", "Gradio-Chat-Gateway.py"]
+### 3. Docker Compose (Recommended)
 ```
+git clone https://github.com/WCBFCJY/Gradio-Chat-Gateway.git
+cd Gradio-Chat-Gateway
 
-```bash
-docker build -t hf-gateway .
-docker run -p 8000:8000 hf-gateway
+nano docker-compose.yml
+
+docker-compose up -d
 ```
 
 ## Usage Examples

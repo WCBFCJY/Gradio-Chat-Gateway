@@ -74,8 +74,9 @@ docker-compose up -d
 ```python
 MODEL_CONFIG = {
     "your-model-name": {
-        "space": "username/space-name",  # Hugging Face Space ID
-        "flags": "11"                     # Configure according to model API documentation
+        "space": "username/space-name",   # Hugging Face Space ID
+        "flags": "11",                    # Configure according to model API documentation
+        "api_name": "/generate"
     }
 }
 ```
@@ -87,21 +88,26 @@ MODEL_CONFIG = {
 3. Choose the appropriate flags combination based on documentation
 4. Test and validate
 
+Example configuration:
+```python
+"demo-32b": {"space": "https://demo.example", "flags": "00", "api_name": "/generate"}
+```
+
 ### Flags Configuration
 
 Each model uses a two-digit `flags` parameter to identify API call characteristics:
 
 **First Digit (Input Format):**
-- `0`: Separate `message` + `system_message`
-- `1`: `input_data` + `system_prompt`
-- `2`: `message` object (with text/files) + `system_prompt`
-- `3`: `message` object (concatenated system and user)
-- `4`: `message` string (concatenated)
+- `0`: `message (str)` + `system_message (str)`
+- `1`: `input_data (str)` + `system_prompt (str)`
+- `2`: `message (dict)` + `system_prompt (str)`
+- `3`: `message (dict)` (system and user)
+- `4`: `message (str)` (system and user)
 
 **Second Digit (Parameter Support):**
 - `0`: No advanced parameters
-- `1`: Full parameters (temperature, top_p, top_k, repetition_penalty)
-- `2`: Only max_tokens
+- `1`: Full parameters `temperature, top_p, top_k, max_tokens, repetition_penalty`
+- `2`: Only `max_tokens`
 
 Example configuration:
 ```python

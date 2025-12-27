@@ -26,6 +26,7 @@ Built-in models:
 - `gpt-oss-20b` - OpenAI open-source model
 - `gemma-3-12b` / `gemma-2-9b` / `gemma-2-2b` - Google Gemma series
 - `qwen2.5-3b` - Alibaba Qwen series
+- `llama-3.2-1b`
 
 Also allows manual addition of new models
 

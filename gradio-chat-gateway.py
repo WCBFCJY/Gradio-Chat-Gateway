@@ -35,7 +35,7 @@ MODEL_CONFIG = {
     "gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "41"},
     "gemma-2-2b": {"space": "huggingface-projects/gemma-2-2b-it", "flags": "41"},
     "qwen2.5-3b": {"space": "Kingoteam/Qwen2.5-vl-3B-demo", "flags": "30"},
-    "llama-3-2-1b": {"space": "KingNish/Llama-3.2-1b-CPU", "flags": "40"}
+    "llama-3.2-1b": {"space": "KingNish/Llama-3.2-1b-CPU", "flags": "40"}
 }
 
 

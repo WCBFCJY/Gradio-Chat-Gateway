@@ -100,7 +100,7 @@ MODEL_CONFIG = {
 
 **第二位（附加参数）：**
 - `0`: 不附加其它参数
-- `1`: 完整参数 `temperature, top_p, top_k, repetition_penalty`
+- `1`: 完整参数 `temperature, top_p, top_k, max_tokens, repetition_penalty`
 - `2`: 仅 `max_tokens`
 
 示例配置：
@@ -200,5 +200,6 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 

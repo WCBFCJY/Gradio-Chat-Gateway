@@ -1,4 +1,13 @@
-# Gradio-Chat-Gateway   <sub><sup>[中文介绍](./README_CN.md)</sup></sub>
+<table width="100%">
+  <tr>
+    <td border="0">
+      <h1>Gradio-Chat-Gateway</h1>
+    </td>
+    <td border="0" align="right" valign="bottom">
+      <a href="./README_CN.md">中文文档</a>
+    </td>
+  </tr>
+</table>
 
 ## Project Overview
 

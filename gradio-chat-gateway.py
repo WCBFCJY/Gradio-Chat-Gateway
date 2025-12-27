@@ -27,20 +27,15 @@ PROXY_URL = os.getenv("PROXY_URL", "socks5://user:pass@ip:port")
 
 # 模型高级配置
 # 下方预置的模型均测试过，可以正常使用，无需调整。
-# 如需添加新模型，请参考以下说明：
-# 格式："用于请求的模型名": {"space": "Huggingface Spaces API调用示例里的模型名", "flags": "填写flags两位参数"}
-# 示例："gpt-oss-20b": {"space": "merterbak/gpt-oss-20b-demo", "flags": "11", "api_name": "/chat"}
-# [flags]第一位数字含义 1：user(str)+system 2：msg(list)+system 3：msg(list) 4：msg(str) 0：msg(str)+sys_msg
-# [flags]第二位数字含义 0：不附加高级参数（兼容性最好） 1：完整附加参数（效果更好） 2：仅附加max_tokens参数
-# 根据要用的模型的API文档自行配置合适的flags，错误配置的flags可能会导致请求失败！（可参考预置模型的API文档）
 
 MODEL_CONFIG = {
     "gpt-oss-20b": {"space": "merterbak/gpt-oss-20b-demo", "flags": "11"},
+    "gpt-oss-20b-safe": {"space": "openai/gpt-oss-safeguard-20b", "flags": "52", "api_name": "/generate"},
     "gemma-3-12b": {"space": "huggingface-projects/gemma-3-12b-it", "flags": "22"},
     "gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "41"},
     "gemma-2-2b": {"space": "huggingface-projects/gemma-2-2b-it", "flags": "41"},
     "qwen2.5-3b": {"space": "Kingoteam/Qwen2.5-vl-3B-demo", "flags": "30"},
-    "gemma-3-270m": {"space": "daniel-dona/gemma-3-270m", "flags": "00", "api_name": "/chat"}
+    "gemma-3-270m": {"space": "daniel-dona/gemma-3-270m", "flags": "00"}
 }
 
 
@@ -114,12 +109,15 @@ class ChatCompletionRequest(BaseModel):
     stream: Optional[bool] = False
     reasoning_effort: Optional[str] = "low"
 
-async def simulate_streaming(full_text: str, model_name: str):
+async def simulate_streaming(full_text: str, model_name: str, reasoning: str):
     chat_id = f"chatcmpl-{uuid.uuid4()}"
     created_time = int(time.time())
     
     # 1. 解析思维链和正文
-    reasoning, content = parse_reasoning(full_text)
+    if reasoning is not None:
+        content = full_text
+    else:
+        reasoning, content = parse_reasoning(full_text)
 
     # 2. 发送思维链部分 (使用 reasoning_content 字段)
     if reasoning:
@@ -138,7 +136,7 @@ async def list_models():
     """模型列表接口（不需要 Token 即可查看支持列表）"""
     return {
         "object": "list",
-        "data": [{"id": m_id, "object": "model", "created": int(time.time()), "owned_by": "huggingface"} for m_id in MODEL_CONFIG.keys()]
+        "data": [{"id": m_id, "object": "model", "created": int(time.time()), "owned_by": "none"} for m_id in MODEL_CONFIG.keys()]
     }
 
 @app.post("/v1/chat/completions")
@@ -188,6 +186,9 @@ async def create_chat_completion(
             }
         elif flags[0] == "4":
             payload["message"] = f"{system_prompt}\n{user_input}"
+        elif flags[0] == "5":
+            payload["prompt"] = user_input
+            payload["policy"] = system_prompt
         else:
             payload["message"] = user_input
             payload["system_message"] = system_prompt
@@ -222,14 +223,22 @@ async def create_chat_completion(
             else:
                 raise e
         
+        reasoning = None
+        
         if isinstance(full_response, (tuple, list)):
-            full_response = str(full_response)
+            reasoning, *rest = full_response
+            reasoning = str(reasoning)
+            full_response = str(rest[0]) if rest else str(full_response)
         
         # 4. 返回响应
         if request.stream:
-            return StreamingResponse(simulate_streaming(full_response, request.model), media_type="text/event-stream")
+            return StreamingResponse(simulate_streaming(full_response, request.model, reasoning), media_type="text/event-stream")
         else:
-            reasoning, content = parse_reasoning(full_response)
+            if reasoning is not None:
+                content = full_response
+            else:
+                reasoning, content = parse_reasoning(full_response)
+            
             message_obj = {"role": "assistant", "content": content}
             
             # 只有当模型确实输出了思维链时才包含该字段

@@ -188,7 +188,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 ## 常见错误码
 
 - `401` - Token 无效或缺失（会自动尝试匿名访问）
-- `429` - ZERO GPU配额超限（免费用户5min/24h，匿名用户1min/24h）
+- `429` - ZERO GPU 配额超限（免费用户5min/24h，匿名用户1min/24h）
 - `400` - 模型不存在或请求参数错误
 - `500` - 模型推理失败
 
@@ -207,6 +207,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

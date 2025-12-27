@@ -168,7 +168,8 @@ async def create_chat_completion(
         flags = config.get("flags", "00")
         
         # 构建基础参数
-        payload = {"api_name": "/chat"}
+        target_api = config.get("api_name", "/chat")
+        payload = {"api_name": target_api}
         
         # 第一位标识：输入模式
         if flags[0] == "1":
@@ -220,6 +221,9 @@ async def create_chat_completion(
                 full_response = await do_predict(None)
             else:
                 raise e
+        
+        if isinstance(full_response, (tuple, list)):
+            full_response = str(full_response[-1])
         
         # 4. 返回响应
         if request.stream:

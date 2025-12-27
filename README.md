@@ -104,6 +104,7 @@ Each model uses a two-digit `flags` parameter to identify API call characteristi
 - `2`: `message (dict)` + `system_prompt (str)`
 - `3`: `message (dict)` (system and user)
 - `4`: `message (str)` (system and user)
+- `5`: `prompt (str)` + `policy (str)`
 
 **Second Digit (Parameter Support):**
 - `0`: No additional parameters

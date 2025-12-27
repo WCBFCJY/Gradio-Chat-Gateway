@@ -151,7 +151,9 @@ async def create_chat_completion(
         if msg.role == "system":
             system_prompt = msg.content
         elif msg.role == "user":
-            user_input = msg.content
+            user_input += f"User: {msg.content}\n"
+        elif msg.role == "assistant":
+            user_input += f"Assistant: {msg.content}\n"
 
     # 3. 处理 reasoning_effort 并拼接至 system_prompt
     if request.reasoning_effort:

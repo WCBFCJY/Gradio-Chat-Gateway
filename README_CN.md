@@ -11,7 +11,7 @@
 
 ## 项目简介
 
-**Gradio-Chat-Gateway** 是一个将 Hugging Face Spaces 上基于 Gradio API 部署的开源 AI 模型转换为 OpenAI 兼容 API 的网关服务，允许用户使用标准的 OpenAI Chat Completion 格式与多个 Hugging Face Spaces 模型进行交互，极大简化了模型调用流程。
+**Gradio-Chat-Gateway** 是一个将基于 Gradio API 部署的开源 AI 模型转换为 OpenAI 兼容 API 的网关服务，允许用户使用标准的 OpenAI Chat Completion 格式与多个 Hugging Face Spaces 模型进行交互，极大简化了模型调用流程。
 
 ## 核心功能
 
@@ -30,7 +30,7 @@
 同时允许手动添加新的模型
 
 ### 3. **认证机制**
-- 直接认证：使用 Hugging Face Token 进行 Spaces 认证
+- 直接认证：使用传入的 Token 进行模型 API 认证
 - 智能降级：Token 不可用时自动切换到匿名访问
 - 自动重试：识别 401/429 状态码并重试
 
@@ -74,15 +74,16 @@ docker-compose up -d
 ```python
 MODEL_CONFIG = {
     "your-model-name": {
-        "space": "username/space-name",  # Hugging Face Space ID
-        "flags": "11"                     # 根据模型 API 文档配置
+        "space": "username/space-name",   # 填写Hugging Face Space ID或模型API的URL(https://demo.example)
+        "flags": "11",                    # Flags，根据模型 API 文档配置
+        "api_name": "/generate"           # API名称，根据模型 API 文档配置
     }
 }
 ```
 
 **配置步骤：**
 
-1. 在 Hugging Face Spaces 找到目标模型
+1. 在 Hugging Face Spaces 或 第三方Gradio API网站 找到目标模型
 2. 查看其 API 文档，确定API端点、输入格式及参数支持情况
 3. 根据文档选择合适的 flags 组合
 4. 测试验证
@@ -200,6 +201,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

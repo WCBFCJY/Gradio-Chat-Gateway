@@ -29,6 +29,35 @@ Also allows manual addition of new models
 - Built-in HTTP/HTTPS/SOCKS5 proxy support
 - Client connection pool caching to avoid repeated initialization
 
+## Deployment Guide
+
+### 1. Install Dependencies
+```bash
+pip install fastapi uvicorn gradio_client pydantic anyio httpx[socks]
+```
+
+### 2. Run Service
+```bash
+python Gradio-Chat-Gateway.py
+```
+
+### 3. Docker Compose (Recommended)
+```
+git clone https://github.com/WCBFCJY/Gradio-Chat-Gateway.git
+cd Gradio-Chat-Gateway
+nano docker-compose.yml
+docker-compose up -d
+```
+
+## Environment Variables
+
+| Variable Name  | 	Type    | 	Default Value                       | Description                                        |
+| ----------- | ------- | ---------------------------- | ------------------------------------------- |
+| `LISTEN`    | String  | `0.0.0.0`                    | 	The IP address the service listens on.                        |
+| `PORT`      | Integer | `8000`                       | 	The port number the service listens on.                            |
+| `USE_PROXY` | Boolean | `False`                      | 	Whether to enable proxy. Supported values: `True`/`False`      |
+| `PROXY_URL` | String  | `socks5://user:pass@ip:port` | Proxy server URL. Supports HTTP(S) and SOCKS5 protocols. |
+
 ## Adding Models Manually
 
 ### Add New Model
@@ -103,28 +132,6 @@ Content-Type: application/json
   "stream": false,
   "reasoning_effort": "medium"
 }
-```
-
-## Deployment Guide
-
-### 1. Install Dependencies
-```bash
-pip install fastapi uvicorn gradio_client pydantic anyio httpx[socks]
-```
-
-### 2. Run Service
-```bash
-python Gradio-Chat-Gateway.py
-```
-
-### 3. Docker Compose (Recommended)
-```
-git clone https://github.com/WCBFCJY/Gradio-Chat-Gateway.git
-cd Gradio-Chat-Gateway
-
-nano docker-compose.yml
-
-docker-compose up -d
 ```
 
 ## Usage Examples

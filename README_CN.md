@@ -74,9 +74,9 @@ docker-compose up -d
 ```python
 MODEL_CONFIG = {
     "your-model-name": {
-        "space": "username/space-name",   # 填写Hugging Face Space ID或模型API的URL(https://demo.example)
-        "flags": "11",                    # Flags，根据模型 API 文档配置
-        "api_name": "/generate"           # API名称，根据模型 API 文档配置
+        "space": "username/space-name",   # (必填) 填写Hugging Face Space ID或模型API的URL(https://demo.example)
+        "flags": "11",                    # (必填) Flags，根据模型 API 文档配置
+        "api_name": "/generate"           # (可选，默认"/chat") API名称，根据模型 API 文档配置
     }
 }
 ```
@@ -87,6 +87,12 @@ MODEL_CONFIG = {
 2. 查看其 API 文档，确定API端点、输入格式及参数支持情况
 3. 根据文档选择合适的 flags 组合
 4. 测试验证
+
+示例配置：
+```python
+"demo-32b": {"space": "https://demo.example", "flags": "00", "api_name": "/generate"}
+# API_URL为 https://demo.example，flags配置为 00，API_NAME为 /generate
+```
 
 ### Flags 配置
 
@@ -201,6 +207,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

@@ -4,4 +4,9 @@ services:
     container_name: gradio-chat-gateway
     ports:
       - "8000:8000"
+    environment:
+      - LISTEN=0.0.0.0
+      - PORT=8000
+      - USE_PROXY=false
+      - PROXY_URL=socks5://user:pass@ip:port
     restart: unless-stopped

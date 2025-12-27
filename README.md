@@ -158,7 +158,7 @@ import openai
 
 client = openai.OpenAI(
     base_url="http://localhost:8000/v1",
-    api_key="hf_your_token"
+    api_key="your_huggingface_token"
 )
 
 response = client.chat.completions.create(

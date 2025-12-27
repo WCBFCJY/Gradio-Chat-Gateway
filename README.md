@@ -1,4 +1,4 @@
-# Gradio-Chat-Gateway
+# Gradio-Chat-Gateway<sup>[中文](./README_ZH.md)</sup>
 
 ## Project Overview
 

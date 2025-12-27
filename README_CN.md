@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-**Gradio-Chat-Gateway** 是一个将 Hugging Face Spaces 上基于 Gradio API部署的开源 AI 模型转换为 OpenAI 兼容 API 的网关服务，允许用户使用标准的 OpenAI Chat Completion 格式与多个 Hugging Face Spaces 模型进行交互，极大简化了模型调用流程。
+**Gradio-Chat-Gateway** 是一个将 Hugging Face Spaces 上基于 Gradio API 部署的开源 AI 模型转换为 OpenAI 兼容 API 的网关服务，允许用户使用标准的 OpenAI Chat Completion 格式与多个 Hugging Face Spaces 模型进行交互，极大简化了模型调用流程。
 
 ## 核心功能
 
@@ -188,5 +188,6 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 ## 许可证
 
 本项目遵循 MIT 许可证
+
 
 ---

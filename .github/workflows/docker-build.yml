@@ -57,6 +57,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1

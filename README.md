@@ -24,7 +24,7 @@
 ### 2. **Multi-Model Access**
 Built-in models:
 - `gpt-oss-20b` - OpenAI open-source model
-- `gemma-3-12b` / `gemma-2-9b` / `gemma-2-2b` / `gemma-3-270m` - Google Gemma series
+- `gemma-3-12b` / `gemma-2-9b` / `gemma-2-2b` - Google Gemma series
 - `qwen2.5-3b` - Alibaba Qwen series
 
 Also allows manual addition of new models

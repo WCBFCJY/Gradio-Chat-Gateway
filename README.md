@@ -1,13 +1,13 @@
-<table width="100%">
-  <tr>
-    <td border="0">
-      <h1>Gradio-Chat-Gateway</h1>
-    </td>
-    <td border="0" align="right" valign="bottom">
-      <a href="./README_CN.md">中文文档</a>
-    </td>
-  </tr>
-</table>
+<div align="center">
+
+# Gradio-Chat-Gateway
+
+<p align="center">
+  <strong>English</strong> | 
+  <a href="./README_CN.md">中文</a>
+</p>
+
+</div>
 
 ## Project Overview
 

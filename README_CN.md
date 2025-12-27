@@ -85,7 +85,7 @@ MODEL_CONFIG = {
 
 1. 在 Hugging Face Spaces 或 第三方Gradio API网站 找到目标模型
 2. 查看其 API 文档，确定API端点、输入格式及参数支持情况
-3. 根据文档选择合适的 flags 组合
+3. 根据文档选择合适的 `flags` 组合
 4. 测试验证
 
 示例配置：
@@ -207,6 +207,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

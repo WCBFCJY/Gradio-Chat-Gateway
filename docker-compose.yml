@@ -1,0 +1,7 @@
+services:
+  gradio-chat-gateway:
+    image: ghcr.io/wcbfcjy/gradio-chat-gateway:latest
+    container_name: gradio-chat-gateway
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

@@ -7,6 +7,6 @@ services:
     environment:
       - LISTEN=0.0.0.0
       - PORT=8000
-      - USE_PROXY=false
+      - USE_PROXY=False
       - PROXY_URL=socks5://user:pass@ip:port
     restart: unless-stopped

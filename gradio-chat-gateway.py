@@ -29,7 +29,7 @@ PROXY_URL = os.getenv("PROXY_URL", "socks5://user:pass@ip:port")
 # 下方预置的模型均测试过，可以正常使用，无需调整。
 # 如需添加新模型，请参考以下说明：
 # 格式："用于请求的模型名": {"space": "Huggingface Spaces API调用示例里的模型名", "flags": "填写flags两位参数"}
-# 示例："gpt-oss-20b": {"space": "merterbak/gpt-oss-20b-demo", "flags": "01"}
+# 示例："gpt-oss-20b": {"space": "merterbak/gpt-oss-20b-demo", "flags": "11", "api_name": "/chat"}
 # [flags]第一位数字含义 1：user(str)+system 2：msg(list)+system 3：msg(list) 4：msg(str) 0：msg(str)+sys_msg
 # [flags]第二位数字含义 0：不附加高级参数（兼容性最好） 1：完整附加参数（效果更好） 2：仅附加max_tokens参数
 # 根据要用的模型的API文档自行配置合适的flags，错误配置的flags可能会导致请求失败！（可参考预置模型的API文档）
@@ -40,7 +40,7 @@ MODEL_CONFIG = {
     "gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "41"},
     "gemma-2-2b": {"space": "huggingface-projects/gemma-2-2b-it", "flags": "41"},
     "qwen2.5-3b": {"space": "Kingoteam/Qwen2.5-vl-3B-demo", "flags": "30"},
-    "gemma-3-270m": {"space": "daniel-dona/gemma-3-270m", "flags": "00"}
+    "gemma-3-270m": {"space": "daniel-dona/gemma-3-270m", "flags": "00", "api_name": "/chat"}
 }
 
 
@@ -223,7 +223,7 @@ async def create_chat_completion(
                 raise e
         
         if isinstance(full_response, (tuple, list)):
-            full_response = str(full_response[-1])
+            full_response = str(full_response)
         
         # 4. 返回响应
         if request.stream:

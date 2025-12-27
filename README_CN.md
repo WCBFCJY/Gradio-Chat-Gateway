@@ -1,4 +1,13 @@
+<div align="center">
+
 # Gradio-Chat-Gateway
+
+<p align="center">
+  <strong>中文</strong> | 
+  <a href="./README.md">English</a>
+</p>
+
+</div>
 
 ## 项目简介
 
@@ -191,3 +200,4 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+

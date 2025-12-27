@@ -24,8 +24,9 @@
 ### 2. **多模型接入**
 内置以下模型（开箱即用）：
 - `gpt-oss-20b` - OpenAI开源模型
-- `gemma-3-12b` / `gemma-2-9b` / `gemma-2-2b` / `gemma-3-270m` - Google Gemma 系列
+- `gemma-3-12b` / `gemma-2-9b` / `gemma-2-2b` - Google Gemma 系列
 - `qwen2.5-3b` - 阿里通义千问系列
+- `llama-3.2-1b`
 
 同时允许手动添加新的模型
 
@@ -208,6 +209,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

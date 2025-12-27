@@ -11,7 +11,7 @@
 
 ## Project Overview
 
-**Gradio-Chat-Gateway** is a gateway service that transforms Gradio-based open-source AI models into OpenAI-compatible APIs. It allows users to interact with multiple Hugging Face Spaces models using the standard OpenAI Chat Completion format, greatly simplifying the model invocation process.
+**Gradio-Chat-Gateway** is a gateway service that transforms open-source AI models deployed via Gradio API into OpenAI-compatible APIs. It allows users to interact with multiple Hugging Face Spaces models using the standard OpenAI Chat Completion format, greatly simplifying the model invocation process.
 
 ## Core Features
 
@@ -30,7 +30,7 @@ Built-in models:
 Also allows manual addition of new models
 
 ### 3. **Authentication Mechanism**
-- Direct authentication: Uses Hugging Face Token for Spaces authentication
+- Direct authentication: Uses the provided Token for model API authentication
 - Smart fallback: Automatically switches to anonymous access when token is unavailable
 - Auto-retry: Recognizes 401/429 status codes and retries
 
@@ -74,23 +74,24 @@ docker-compose up -d
 ```python
 MODEL_CONFIG = {
     "your-model-name": {
-        "space": "username/space-name",   # Hugging Face Space ID
-        "flags": "11",                    # Configure according to model API documentation
-        "api_name": "/generate"
+        "space": "username/space-name",   # (Required) Hugging Face Space ID or model API URL (https://demo.example)
+        "flags": "11",                    # (Required) Flags, configured based on model API documentation
+        "api_name": "/generate"           # (Optional, default "/chat") API endpoint name from documentation
     }
 }
 ```
 
 **Configuration Steps:**
 
-1. Find the target model on Hugging Face Spaces
-2. Review its API documentation to determine input format and parameter support
-3. Choose the appropriate flags combination based on documentation
+1. Find the target model on Hugging Face Spaces or a third-party Gradio API site
+2. Review its API documentation to determine the endpoint, input format, and parameter support
+3. Choose the appropriate `flags` combination based on documentation
 4. Test and validate
 
 Example configuration:
 ```python
 "demo-32b": {"space": "https://demo.example", "flags": "00", "api_name": "/generate"}
+# API_URL is https://demo.example, flags set to 00, API_NAME set to /generate
 ```
 
 ### Flags Configuration
@@ -105,14 +106,14 @@ Each model uses a two-digit `flags` parameter to identify API call characteristi
 - `4`: `message (str)` (system and user)
 
 **Second Digit (Parameter Support):**
-- `0`: No advanced parameters
+- `0`: No additional parameters
 - `1`: Full parameters `temperature, top_p, top_k, max_tokens, repetition_penalty`
 - `2`: Only `max_tokens`
 
 Example configuration:
 ```python
 "gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "01"}
-# flags="01" means: use message+system_message format + full parameters
+# flags="01" means: use message + system_message format + full parameters
 ```
 
 ## API Documentation

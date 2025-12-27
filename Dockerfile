@@ -7,9 +7,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
+
+RUN pip install --prefix=/install --no-cache-dir --no-warn-script-location -r requirements.txt
 
 FROM python:3.10-slim
+
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -24,4 +27,4 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["python", "Gradio-Chat-Gateway.py"]
+CMD ["python", "-u", "Gradio-Chat-Gateway.py"]

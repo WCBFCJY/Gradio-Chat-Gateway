@@ -18,7 +18,7 @@ WORKDIR /app
 
 COPY --from=builder /install /usr/local
 
-COPY Gradio-Chat-Gateway.py .
+COPY gradio-chat-gateway.py .
 
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
@@ -27,4 +27,4 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["python", "-u", "Gradio-Chat-Gateway.py"]
+CMD ["python", "-u", "gradio-chat-gateway.py"]

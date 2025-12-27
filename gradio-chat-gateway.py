@@ -37,8 +37,8 @@ PROXY_URL = os.getenv("PROXY_URL", "socks5://user:pass@ip:port")
 MODEL_CONFIG = {
     "gpt-oss-20b": {"space": "merterbak/gpt-oss-20b-demo", "flags": "11"},
     "gemma-3-12b": {"space": "huggingface-projects/gemma-3-12b-it", "flags": "22"},
-    "gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "01"},
-    "gemma-2-2b": {"space": "huggingface-projects/gemma-2-2b-it", "flags": "01"},
+    "gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "41"},
+    "gemma-2-2b": {"space": "huggingface-projects/gemma-2-2b-it", "flags": "41"},
     "qwen2.5-3b": {"space": "Kingoteam/Qwen2.5-vl-3B-demo", "flags": "30"},
     "gemma-3-270m": {"space": "daniel-dona/gemma-3-270m", "flags": "00"}
 }

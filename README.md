@@ -47,7 +47,7 @@ pip install fastapi uvicorn gradio_client pydantic anyio httpx[socks]
 
 ### 2. Run Service
 ```bash
-python Gradio-Chat-Gateway.py
+python gradio-chat-gateway.py
 ```
 
 ### 3. Docker Compose (Recommended)

@@ -104,6 +104,7 @@ MODEL_CONFIG = {
 - `2`: `message (dict)` + `system_prompt (str)`
 - `3`: `message (dict)`（system 和 user）
 - `4`: `message (str)`（system 和 user）
+- `5`: `prompt (str)` + `policy (str)`
 
 **第二位（附加参数）：**
 - `0`: 不附加其它参数
@@ -207,6 +208,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

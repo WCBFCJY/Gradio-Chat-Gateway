@@ -26,6 +26,7 @@
 - 通过 `models.json` 配置文件管理多个 API 来源，支持一键切换不同模型
 - 提供单HTML可视化配置编辑器 `model-config-editor.html`，用于管理模型
 - 内置的 `models.json` 适配以下模型（开箱即用）：
+
     - `gpt-oss-20b` - OpenAI开源模型
     - `gemma-3-12b` / `gemma-2-9b` / `gemma-2-2b` - Google Gemma 系列
     - `qwen2.5-3b` - 阿里通义千问系列
@@ -180,6 +181,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

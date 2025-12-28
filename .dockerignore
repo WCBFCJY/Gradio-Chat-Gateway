@@ -11,6 +11,7 @@ venv/
 .gitignore
 .github
 *.md
+*.html
 Dockerfile
 docker-compose.yml
 .DS_Store

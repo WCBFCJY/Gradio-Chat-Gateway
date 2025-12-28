@@ -126,23 +126,44 @@ def real_streaming(job, model_name):
     created_time = int(time.time())
     previous_text = ""
     
-    for response in job:
-        current_text = str(response)
-        if len(current_text) > len(previous_text):
-            delta = current_text[len(previous_text):]
-            previous_text = current_text
-                
-            chunk = {
-                "id": chat_id,
-                "object": "chat.completion.chunk",
-                "created": created_time,
-                "model": model_name,
-                "choices": [{"index": 0, "delta": {"content": delta}, "finish_reason": None}]
-            }
-            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+    try:
+        for response in job:
+            current_text = str(response)
+            if len(current_text) > len(previous_text):
+                delta = current_text[len(previous_text):]
+                previous_text = current_text
+                    
+                chunk = {
+                    "id": chat_id,
+                    "object": "chat.completion.chunk",
+                    "created": created_time,
+                    "model": model_name,
+                    "choices": [{"index": 0, "delta": {"content": delta}, "finish_reason": None}]
+                }
+                yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
 
-    yield f"data: {json.dumps({'id': chat_id, 'object': 'chat.completion.chunk', 'created': created_time, 'model': model_name, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]}, ensure_ascii=False)}\n\n"
-    yield "data: [DONE]\n\n"
+        if not previous_text:
+            # 尝试获取 job 的最终状态或报错信息
+            try:
+                _ = job.result()
+            except Exception as job_error:
+                raise Exception(f"[API Error]  {str(job_error)}")
+
+        yield f"data: {json.dumps({'id': chat_id, 'object': 'chat.completion.chunk', 'created': created_time, 'model': model_name, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]}, ensure_ascii=False)}\n\n"
+        yield "data: [DONE]\n\n"
+
+    except Exception as e:
+        #print(f"Stream Error: {e}")
+        error_msg = f"**{str(e)}**" 
+        error_chunk = {
+            "id": chat_id,
+            "object": "chat.completion.chunk",
+            "created": created_time,
+            "model": model_name,
+            "choices": [{"index": 0, "delta": {"content": error_msg}, "finish_reason": "stop"}]
+        }
+        yield f"data: {json.dumps(error_chunk, ensure_ascii=False)}\n\n"
+        yield "data: [DONE]\n\n"
 
 async def simulate_streaming(full_text: str, model_name: str, reasoning: str):
     chat_id = f"chatcmpl-{uuid.uuid4()}"

@@ -11,35 +11,48 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from gradio_client import Client
+from gradio_client.client import Job
 
 app = FastAPI()
 security = HTTPBearer()
 
 # --- 配置文件 ---
 
+CONFIG_FILE = "models.json"
+
+def load_model_config():
+    if not os.path.exists(CONFIG_FILE):
+        print(f"CRITICAL ERROR: Configuration file '{CONFIG_FILE}' not found.")
+        exit(1)
+        
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            config = json.load(f)
+            
+        if not config:
+            raise ValueError("Configuration is empty.")
+            
+        print(f"INFO:     Loaded configuration for {len(config)} models.")
+        return config
+        
+    except json.JSONDecodeError as e:
+        print(f"CRITICAL ERROR: Failed to parse '{CONFIG_FILE}'. Invalid JSON format.\nError: {e}")
+        exit(1)
+    except Exception as e:
+        print(f"CRITICAL ERROR: An unexpected error occurred while loading config.\nError: {e}")
+        exit(1)
+
+# 初始化配置 (失败即退出)
+MODEL_CONFIG = load_model_config()
+
 # 监听配置
 LISTEN = os.getenv("LISTEN", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
 # 使用HTTP(s)/Socks5代理
+#USE_PROXY = False
 USE_PROXY = os.getenv("USE_PROXY", "False")
 PROXY_URL = os.getenv("PROXY_URL", "socks5://user:pass@ip:port")
-
-# 模型高级配置
-# 下方预置的模型均测试过，可以正常使用，无需调整。
-
-MODEL_CONFIG = {
-    "gpt-oss-20b": {"space": "merterbak/gpt-oss-20b-demo", "flags": "11"},
-    "gpt-oss-20b-safe": {"space": "openai/gpt-oss-safeguard-20b", "flags": "52", "api_name": "/generate"},
-    "gemma-3-12b": {"space": "huggingface-projects/gemma-3-12b-it", "flags": "22"},
-    "gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "41"},
-    "gemma-2-2b": {"space": "huggingface-projects/gemma-2-2b-it", "flags": "41"},
-    "qwen2.5-3b": {"space": "Kingoteam/Qwen2.5-vl-3B-demo", "flags": "30"},
-    "llama-3.2-1b": {"space": "KingNish/Llama-3.2-1b-CPU", "flags": "40"}
-}
-
-
-
 
 # --- 核心逻辑 ---
 
@@ -58,10 +71,6 @@ def get_hf_token(auth: HTTPAuthorizationCredentials = Security(security)):
     return auth.credentials
 
 def parse_reasoning(text: str):
-    """
-    解析 Gradio 返回的字符串
-    提取 <details> 中的思维链 和 剩余的正文
-    """
     reasoning = ""
     content = text
     
@@ -107,7 +116,33 @@ class ChatCompletionRequest(BaseModel):
     top_k: Optional[int] = 50
     repetition_penalty: Optional[float] = 1.0
     stream: Optional[bool] = False
-    reasoning_effort: Optional[str] = "low"
+    reasoning_effort: Optional[str] = "default"
+
+def real_streaming(job, model_name):
+    """
+    处理 Gradio 的真流式 Job，计算增量并转换为 OpenAI 格式
+    """
+    chat_id = f"chatcmpl-{uuid.uuid4()}"
+    created_time = int(time.time())
+    previous_text = ""
+    
+    for response in job:
+        current_text = str(response)
+        if len(current_text) > len(previous_text):
+            delta = current_text[len(previous_text):]
+            previous_text = current_text
+                
+            chunk = {
+                "id": chat_id,
+                "object": "chat.completion.chunk",
+                "created": created_time,
+                "model": model_name,
+                "choices": [{"index": 0, "delta": {"content": delta}, "finish_reason": None}]
+            }
+            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+
+    yield f"data: {json.dumps({'id': chat_id, 'object': 'chat.completion.chunk', 'created': created_time, 'model': model_name, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]}, ensure_ascii=False)}\n\n"
+    yield "data: [DONE]\n\n"
 
 async def simulate_streaming(full_text: str, model_name: str, reasoning: str):
     chat_id = f"chatcmpl-{uuid.uuid4()}"
@@ -119,7 +154,7 @@ async def simulate_streaming(full_text: str, model_name: str, reasoning: str):
     else:
         reasoning, content = parse_reasoning(full_text)
 
-    # 2. 发送思维链部分 (使用 reasoning_content 字段)
+    # 2. 发送思维链部分
     if reasoning:
         yield f"data: {json.dumps({'id': chat_id, 'object': 'chat.completion.chunk', 'created': created_time, 'model': model_name, 'choices': [{'index': 0, 'delta': {'role': 'assistant', 'reasoning_content': reasoning}, 'finish_reason': None}]}, ensure_ascii=False)}\n\n"
 
@@ -133,7 +168,6 @@ async def simulate_streaming(full_text: str, model_name: str, reasoning: str):
 # --- API接口 ---
 @app.get("/v1/models")
 async def list_models():
-    """模型列表接口（不需要 Token 即可查看支持列表）"""
     return {
         "object": "list",
         "data": [{"id": m_id, "object": "model", "created": int(time.time())} for m_id in MODEL_CONFIG.keys()]
@@ -142,88 +176,112 @@ async def list_models():
 @app.post("/v1/chat/completions")
 async def create_chat_completion(
     request: ChatCompletionRequest, 
-    hf_token: str = Depends(get_hf_token) # 这里注入权限检查
+    hf_token: str = Depends(get_hf_token)
 ):
 
+    if request.model not in MODEL_CONFIG:
+        raise HTTPException(status_code=400, detail=f"Model '{request.model}' is not configured.")
+    
+    model_conf = MODEL_CONFIG[request.model]
+    
     system_prompt = "You are a helpful assistant."
     user_input = ""
+
     for msg in request.messages:
         if msg.role == "system":
             system_prompt = msg.content
-        elif msg.role == "user":
-            user_input += f"User: {msg.content}\n"
-        elif msg.role == "assistant":
-            user_input += f"Assistant: {msg.content}\n"
+            break
 
-    # 3. 处理 reasoning_effort 并拼接至 system_prompt
+    if model_conf.get("enable_history", True):
+        for msg in request.messages:
+            if msg.role == "user":
+                user_input += f"User: {msg.content}\n"
+            elif msg.role == "assistant":
+                user_input += f"Assistant: {msg.content}\n"
+    else:
+        last_user_msg = next((m for m in reversed(request.messages) if m.role == "user"), None)
+        user_input = last_user_msg.content
+
+    # 处理 reasoning_effort 并拼接至 system_prompt
     if request.reasoning_effort:
-        # 确保拼接格式自然，如果原 prompt 结尾没句号则补一个
-        if not system_prompt.rstrip().endswith(('.', '!', '?')):
+        if not system_prompt.rstrip().endswith(('.', '!', '?', '。')):
             system_prompt = system_prompt.strip() + "."
         system_prompt += f" Reasoning: {request.reasoning_effort}"
 
     async def do_predict(token: Optional[str]):
         client = get_gradio_client(request.model, token)
-        config = MODEL_CONFIG[request.model]
-        flags = config.get("flags", "00")
         
-        # 构建基础参数
-        target_api = config.get("api_name", "/chat")
-        payload = {"api_name": target_api}
+        api_name = model_conf.get("api_name", "/chat")
+        payload = {"api_name": api_name}
         
-        # 第一位标识：输入模式
-        if flags[0] == "1":
-            payload["input_data"] = user_input
-            payload["system_prompt"] = system_prompt
-        elif flags[0] == "2":
-            payload["message"] = {
-                "text": f"{user_input}", 
-                "files": [] 
-            }
-            payload["system_prompt"] = system_prompt
-        elif flags[0] == "3":
-            payload["message"] = {
-                "text": f"{system_prompt}\n{user_input}", 
-                "files": [] 
-            }
-        elif flags[0] == "4":
-            payload["message"] = f"{system_prompt}\n{user_input}"
-        elif flags[0] == "5":
-            payload["prompt"] = user_input
-            payload["policy"] = system_prompt
+        enable_sys = model_conf.get("enable_system_prompt", False)
+        if not enable_sys:
+            final_user_input = f"[[system:{system_prompt}],[user:{user_input}]]"
         else:
-            payload["message"] = user_input
-            payload["system_message"] = system_prompt
-            
-        # 第二位标识：额外参数
-        if flags[1] == "1":
-            payload.update({
-                "max_new_tokens": request.max_tokens,
-                "temperature": request.temperature,
-                "top_p": request.top_p,
-                "top_k": request.top_k,
-                "repetition_penalty": request.repetition_penalty,
-            })
-        elif flags[1] == "2":
-            payload["max_new_tokens"] = request.max_tokens
+            final_user_input = user_input
         
-        # 使用关键字参数调用
-        return await anyio.to_thread.run_sync(partial(client.predict, **payload))
+        input_type = model_conf.get("input_payload_type", "str")
+        
+        if input_type == "dict":
+            input_data = {
+                "text": final_user_input, 
+                "files": [] 
+            }
+        else:
+            input_data = final_user_input
+        
+        user_key = model_conf.get("user_param_name", "message")
+
+        payload[user_key] = input_data
+        
+        sys_key = model_conf.get("system_param_name")
+        if enable_sys and sys_key:
+            payload[sys_key] = system_prompt
+        
+        request_params = {
+            "max_new_tokens": request.max_tokens,
+            "temperature": request.temperature,
+            "top_p": request.top_p,
+            "top_k": request.top_k,
+            "repetition_penalty": request.repetition_penalty,
+        }
+        
+        allowlist = model_conf.get("parameter_allowlist", [])
+        for param in allowlist:
+            if param in request_params:
+                payload[param] = request_params[param]
+        
+        #print(f"\n[Debug] Model: {request.model} | Space: {model_conf.get('space')}")
+        #print(f"[Debug] Payload:\n{json.dumps(payload, default=str, ensure_ascii=False, indent=2)}")
+        #print("-" * 50)
+        
+        should_stream = request.stream and model_conf.get("enable_streaming", False)
+        
+        if should_stream:
+            return client.submit(**payload)
+        else:
+            return await anyio.to_thread.run_sync(partial(client.predict, **payload))
 
 
-    # 3. 核心调用逻辑：带 Token 尝试 -> 失败则匿名尝试
+    # 带 Token 尝试 -> 失败则匿名尝试
     try:
         try:
             full_response = await do_predict(hf_token)
         except Exception as e:
             error_msg = str(e).lower()
+            #print(f"Token error detected, falling back to anonymous: {e}")
             # 如果提供了 Token 且报错包含 401(无效)、429(超限) 或 token 相关关键字
             if hf_token and any(x in error_msg for x in ["401", "429", "token", "limit", "quota"]):
-                #print(f"Token error detected, falling back to anonymous: {e}")
                 print("Error detected, Retrying...")
                 full_response = await do_predict(None)
             else:
                 raise e
+        
+        if isinstance(full_response, Job):
+            return StreamingResponse(
+                real_streaming(full_response, request.model), 
+                media_type="text/event-stream"
+            )
         
         reasoning = None
         
@@ -232,7 +290,6 @@ async def create_chat_completion(
             reasoning = str(reasoning)
             full_response = str(rest[0]) if rest else str(full_response)
         
-        # 4. 返回响应
         if request.stream:
             return StreamingResponse(simulate_streaming(full_response, request.model, reasoning), media_type="text/event-stream")
         else:

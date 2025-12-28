@@ -9,7 +9,7 @@
 
 </div>
 
-## 项目简介
+## 📖 项目简介
 
 **Gradio-Chat-Gateway** 是一个轻量的高性能 API 网关，支持多种模型，能够将 Gradio API 转换为标准的 OpenAI 兼容 API 。允许用户使用标准的 `OpenAI Chat Completion` 格式与 Hugging Face Spaces 上基于 Gradio API 托管的各类 LLM 开源模型进行交互，极大简化了模型调用流程。
 
@@ -161,14 +161,14 @@ curl -X POST http://localhost:8000/v1/chat/completions \
   }'
 ```
 
-## ⚠️ 常见错误码
+## 🔎 常见错误码
 
 - `401` - Token 无效或缺失（会自动尝试匿名访问）
 - `429` - ZERO GPU 配额超限（免费用户5min/24h，匿名用户1min/24h）
 - `400` - 模型不存在或请求参数错误
 - `500` - 模型推理失败
 
-## 🔎 注意事项
+## ⚠️ 注意事项
 
 1. **Token 安全**：生产环境建议使用环境变量管理 Token
 2. **速率限制**：Hugging Face Spaces 有请求频率限制
@@ -181,6 +181,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

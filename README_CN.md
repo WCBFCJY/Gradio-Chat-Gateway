@@ -69,54 +69,7 @@ docker-compose up -d
 | `PROXY_URL` | String  | `socks5://user:pass@ip:port` | 代理服务器地址。支持 HTTP(S) 和 SOCKS5 |
 
 ## 手动添加模型
-
-### 添加新模型
-
-```python
-MODEL_CONFIG = {
-    "your-model-name": {
-        "space": "username/space-name",   # (必填) 填写Hugging Face Space ID或模型API的URL(https://demo.example)
-        "flags": "11",                    # (必填) Flags，根据模型 API 文档配置
-        "api_name": "/generate"           # (可选，默认"/chat") API名称，根据模型 API 文档配置
-    }
-}
-```
-
-**配置步骤：**
-
-1. 在 Hugging Face Spaces 或 第三方Gradio API网站 找到目标模型
-2. 查看其 API 文档，确定API端点、输入格式及参数支持情况
-3. 根据文档选择合适的 `flags` 组合
-4. 测试验证
-
-示例配置：
-```python
-"demo-32b": {"space": "https://demo.example", "flags": "00", "api_name": "/generate"}
-# API_URL为 https://demo.example，flags配置为 00，API_NAME为 /generate
-```
-
-### Flags 配置
-
-每个模型使用两位 `flags` 参数标识 API 调用特性：
-
-**第一位（输入格式）：**
-- `0`: `message (str)` + `system_message (str)`
-- `1`: `input_data (str)` + `system_prompt (str)`
-- `2`: `message (dict)` + `system_prompt (str)`
-- `3`: `message (dict)`（system 和 user）
-- `4`: `message (str)`（system 和 user）
-- `5`: `prompt (str)` + `policy (str)`
-
-**第二位（附加参数）：**
-- `0`: 不附加其它参数
-- `1`: 完整参数 `temperature, top_p, top_k, max_tokens, repetition_penalty`
-- `2`: 仅 `max_tokens`
-
-示例配置：
-```python
-"gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "01"}
-# flags="01" 表示：使用 message+system_message 格式 + 完整参数
-```
+- `Todo`
 
 ## API 接口文档
 
@@ -209,6 +162,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

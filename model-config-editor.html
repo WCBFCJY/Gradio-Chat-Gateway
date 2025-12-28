@@ -150,6 +150,9 @@
                                 <i class="ph-bold ph-arrow-square-out"></i>
                             </a>
                         </div>
+                        <p class="text-xs text-blue-500 dark:text-blue-400 flex items-center gap-1">
+                            <i class="ph-fill ph-info"></i> {{ t('spaceHint') }}
+                        </p>
                     </div>
 
                     <!-- Common String Fields (Optional) -->
@@ -253,23 +256,24 @@
         en: {
             title: 'Model Config Editor',
             importBtn: 'Import JSON',
-            exportJson: 'Export Config',
+            exportJson: 'Export',
             welcomeTitle: 'No Models Loaded',
             welcomeDesc: 'Import an existing models.json file or start from scratch.',
             createEmpty: 'Create New',
             modelsList: 'Models',
             clearAll: 'Clear All',
             addModel: 'Add Model',
-            modelId: 'Model ID (Key)',
+            modelId: 'Model ID',
             idHint: 'Must be unique.',
-            hfSpace: 'Hugging Face Space ID',
-            spacePlaceholder: 'username/space-name',
+            hfSpace: 'Space ID',
+            spacePlaceholder: 'username/space-name OR https://...',
+			spaceHint: 'Enter Space ID (e.g. openai/gpt2) or full URL.',
             noSpace: 'No Space ID',
             apiName: 'API Endpoint',
             payloadType: 'Payload Type',
             userParam: 'User Parameter Name',
             enable_system_prompt: 'System Prompt',
-            enable_history: 'Chat History',
+            enable_history: 'Send Chat History',
             enable_streaming: 'Streaming',
             systemParam: 'System Parameter Name',
             supportedParams: 'Supported Parameters',
@@ -281,31 +285,32 @@
         },
         zh: {
             title: '模型配置编辑器',
-            importBtn: '导入配置文件',
-            exportJson: '导出配置',
+            importBtn: '导入',
+            exportJson: '导出',
             welcomeTitle: '暂无模型数据',
             welcomeDesc: '请导入 models.json 文件或新建一个空白配置。',
             createEmpty: '新建模型',
             modelsList: '模型列表',
             clearAll: '清空所有',
             addModel: '添加模型',
-            modelId: '模型 ID (Key)',
+            modelId: '模型 ID',
             idHint: '必须唯一，用于索引。',
-            hfSpace: 'Hugging Face Space ID',
-            spacePlaceholder: '用户名/空间名',
+            hfSpace: 'Space ID',
+            spacePlaceholder: '用户名/空间名 或 完整URL',
+            spaceHint: '输入 Space ID (如 openai/gpt2) 或完整链接。',
             noSpace: '未填写 Space',
             apiName: 'API 端点',
             payloadType: '载荷类型',
-            userParam: '用户参数名',
+            userParam: 'User 参数名',
             enable_system_prompt: '启用系统提示词',
-            enable_history: '启用历史记录',
+            enable_history: '发送历史消息',
             enable_streaming: '启用流式输出',
-            systemParam: '系统参数名',
+            systemParam: 'System 参数名',
             supportedParams: '支持的参数 (勾选)',
-            paramHint: '勾选该模型支持调整的参数。',
-            download: '下载 .json',
+            paramHint: '请根据模型API文档勾选该模型支持调整的参数，如错误配置会导致调用失败。',
+            download: '下载',
             close: '关闭',
-            copy: '复制代码',
+            copy: '复制',
             copied: '已复制!'
         }
     };

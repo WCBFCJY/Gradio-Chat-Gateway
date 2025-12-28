@@ -19,7 +19,7 @@
 - 完整支持 `/v1/chat/completions` 和 `/v1/models` 接口
 - 兼容 OpenAI 的请求/响应格式
 - 兼容 OpenAI 请求常用的参数
-- 支持伪流式（stream）和非流式响应
+- 支持流式（stream）、伪流式和非流式响应
 
 ### 2. **多模型接入**
 内置以下模型（开箱即用）：
@@ -162,6 +162,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

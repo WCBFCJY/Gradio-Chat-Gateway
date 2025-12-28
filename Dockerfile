@@ -19,6 +19,7 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 
 COPY gradio-chat-gateway.py .
+COPY models.json .
 
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app

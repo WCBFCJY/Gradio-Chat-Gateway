@@ -68,56 +68,6 @@ docker-compose up -d
 | `USE_PROXY` | Boolean | `False`                      | 	Whether to enable proxy. Supported values: `True`/`False`      |
 | `PROXY_URL` | String  | `socks5://user:pass@ip:port` | Proxy server URL. Supports HTTP(S) and SOCKS5 protocols. |
 
-## Adding Models Manually
-
-### Add New Model
-
-```python
-MODEL_CONFIG = {
-    "your-model-name": {
-        "space": "username/space-name",   # (Required) Hugging Face Space ID or model API URL (https://demo.example)
-        "flags": "11",                    # (Required) Flags, configured based on model API documentation
-        "api_name": "/generate"           # (Optional, default "/chat") API endpoint name from documentation
-    }
-}
-```
-
-**Configuration Steps:**
-
-1. Find the target model on Hugging Face Spaces or a third-party Gradio API site
-2. Review its API documentation to determine the endpoint, input format, and parameter support
-3. Choose the appropriate `flags` combination based on documentation
-4. Test and validate
-
-Example configuration:
-```python
-"demo-32b": {"space": "https://demo.example", "flags": "00", "api_name": "/generate"}
-# API_URL is https://demo.example, flags set to 00, API_NAME set to /generate
-```
-
-### Flags Configuration
-
-Each model uses a two-digit `flags` parameter to identify API call characteristics:
-
-**First Digit (Input Format):**
-- `0`: `message (str)` + `system_message (str)`
-- `1`: `input_data (str)` + `system_prompt (str)`
-- `2`: `message (dict)` + `system_prompt (str)`
-- `3`: `message (dict)` (system and user)
-- `4`: `message (str)` (system and user)
-- `5`: `prompt (str)` + `policy (str)`
-
-**Second Digit (Parameter Support):**
-- `0`: No additional parameters
-- `1`: Full parameters `temperature, top_p, top_k, max_tokens, repetition_penalty`
-- `2`: Only `max_tokens`
-
-Example configuration:
-```python
-"gemma-2-9b": {"space": "huggingface-projects/gemma-2-9b-it", "flags": "01"}
-# flags="01" means: use message + system_message format + full parameters
-```
-
 ## API Documentation
 
 ### 1. Get Model List

@@ -244,6 +244,7 @@ async def create_chat_completion(
             "top_p": request.top_p,
             "top_k": request.top_k,
             "repetition_penalty": request.repetition_penalty,
+            "reasoning_effort": request.reasoning_effort,
         }
         
         allowlist = model_conf.get("parameter_allowlist", [])

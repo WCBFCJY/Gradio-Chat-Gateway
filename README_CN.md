@@ -23,9 +23,9 @@
 - 支持流式（stream）、伪流式和非流式响应
 
 ### 2. **多模型聚合**
-- 通过 `models.json` 配置文件管理多个 API 来源，支持一键切换不同模型
-- 提供单HTML可视化配置编辑器 `model-config-editor.html`，用于管理模型
-- 内置 `models.json` 包含模型 `gpt-oss-20b / gemma-3-12b / gemma-2-9b / gemma-2-2b / qwen2.5-3b`
+通过 `models.json` 配置文件管理多个 API 来源，支持一键切换不同模型  
+提供单HTML可视化配置编辑器 `model-config-editor.html`，用于管理模型  
+内置 `models.json` 包含模型 `gpt-oss-20b / gemma-3-12b / gemma-2-9b / gemma-2-2b / qwen2.5-3b`  
 
 ### 3. **认证机制**
 - 直接认证：使用传入的 Token 进行模型 API 认证
@@ -78,7 +78,7 @@ docker-compose up -d
 | `PROXY_URL` | String  | `socks5://user:pass@ip:port` | 代理服务器地址。支持 HTTP(S) 和 SOCKS5 |
 
 ## 🧩 模型管理
-本项目提供HTML单文件配置编辑器 `model-config-editor.html`
+本项目提供HTML单文件配置编辑器 `model-config-editor.html`  
 使用 `model-config-editor` 可视化管理模型，无需手动修改 JSON
 
 1.  在浏览器中直接打开 `model-config-editor.html`
@@ -177,6 +177,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

@@ -28,9 +28,9 @@
 - 内置的 `models.json` 适配以下模型（开箱即用）：
 
 ```
-    - gpt-oss-20b - OpenAI开源模型
-    - gemma-3-12b / gemma-2-9b / gemma-2-2b - Google Gemma 系列
-    - qwen2.5-3b - 阿里通义千问系列
+OpenAI 开源模型：gpt-oss-20b
+Google Gemma 系列：gemma-3-12b / gemma-2-9b / gemma-2-2b
+阿里通义千问：qwen2.5-3b
 ```
 
 ### 3. **认证机制**
@@ -183,6 +183,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

@@ -78,7 +78,7 @@ docker-compose up -d
 | `PROXY_URL`   | String  | `socks5://user:pass@ip:port` | Proxy server URL. Supports HTTP(S) and SOCKS5   |
 
 ## 🧩 Model Management
-This project provides a single-file HTML configuration editor: `model-config-editor.html`
+This project provides a single-file HTML configuration editor: `model-config-editor.html`  
 Use `model-config-editor` to visually manage models without manually modifying the JSON file
 
 1.  Open `model-config-editor.html` directly in your browser

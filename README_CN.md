@@ -11,7 +11,7 @@
 
 ## 项目简介
 
-**Gradio-Chat-Gateway** 是一个轻量的高性能网关，用于将 Gradio API 转换为标准的 OpenAI 兼容 API 。允许用户使用标准的 `OpenAI Chat Completion` 格式与 Hugging Face Spaces 上基于 Gradio API 部署的开源模型进行交互，极大简化了模型调用流程。
+**Gradio-Chat-Gateway** 是一个轻量的高性能 API 网关，支持多种模型，能够将 Gradio API 转换为标准的 OpenAI 兼容 API 。允许用户使用标准的 `OpenAI Chat Completion` 格式与 Hugging Face Spaces 上基于 Gradio API 托管的各类 LLM 开源模型进行交互，极大简化了模型调用流程。
 
 ## ✨ 核心功能
 
@@ -181,6 +181,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 
 ---
+
 
 
 

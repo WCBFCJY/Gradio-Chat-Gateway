@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Config Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: '#6366f1', secondary: '#ec4899' }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 font-sans h-screen overflow-hidden">
+
+<div id="app" class="flex flex-col h-full">
+
+    <!-- Header -->
+    <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 z-20 shrink-0">
+        <div class="flex items-center gap-3">
+            <div v-if="hasModels" class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" @click="sidebarOpen = !sidebarOpen">
+                <i class="ph ph-list text-2xl"></i>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white">
+                <i class="ph ph-sliders text-xl"></i>
+            </div>
+            <h1 class="font-bold text-lg hidden sm:block">{{ t('title') }}</h1>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Hidden File Input -->
+            <input type="file" ref="fileInput" @change="handleFileUpload" accept=".json" class="hidden">
+            
+            <button @click="$refs.fileInput.click()" class="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center gap-2">
+                <i class="ph-bold ph-upload-simple"></i>
+                <span class="hidden sm:inline">{{ t('importBtn') }}</span>
+            </button>
+
+            <button @click="toggleLang" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                {{ lang === 'en' ? '中文' : 'En' }}
+            </button>
+            <button @click="toggleTheme" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition text-xl">
+                <i :class="isDark ? 'ph-fill ph-sun' : 'ph-fill ph-moon'"></i>
+            </button>
+            <button v-if="hasModels" @click="showExportModal = true" class="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-indigo-600 text-white rounded-lg shadow-lg shadow-indigo-500/30 transition text-sm font-medium">
+                <i class="ph ph-code"></i>
+                <span class="hidden sm:inline">{{ t('exportJson') }}</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Welcome / Empty State -->
+    <div v-if="!hasModels" class="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-300">
+        <div class="w-24 h-24 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mb-6 text-primary">
+            <i class="ph-duotone ph-file-json text-5xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">{{ t('welcomeTitle') }}</h2>
+        <p class="text-gray-500 dark:text-gray-400 max-w-md mb-8">{{ t('welcomeDesc') }}</p>
+        <div class="flex gap-4">
+            <button @click="$refs.fileInput.click()" class="px-6 py-3 bg-primary hover:bg-indigo-600 text-white rounded-xl shadow-lg transition font-medium flex items-center gap-2">
+                <i class="ph-bold ph-upload"></i> {{ t('importBtn') }}
+            </button>
+            <button @click="addNewModel" class="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition font-medium">
+                {{ t('createEmpty') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div v-else class="flex flex-1 overflow-hidden relative">
+        
+        <!-- Sidebar -->
+        <aside :class="['absolute md:relative z-10 w-72 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-transform duration-300', sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0']">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('modelsList') }}</span>
+                <div class="flex gap-1">
+                    <button @click="clearAll" class="p-1.5 rounded-md hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 text-gray-400 transition" :title="t('clearAll')">
+                        <i class="ph-bold ph-trash"></i>
+                    </button>
+                    <button @click="addNewModel" class="p-1.5 rounded-md hover:bg-indigo-100 hover:text-primary dark:hover:bg-indigo-900/30 text-gray-500 transition" :title="t('addModel')">
+                        <i class="ph-bold ph-plus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-2 space-y-1">
+                <div v-for="(config, id) in models" :key="id" 
+                     @click="selectModel(id)"
+                     :class="['group flex items-center justify-between p-3 rounded-lg cursor-pointer transition border', selectedId === id ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-primary' : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50']">
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="truncate font-medium text-sm">{{ id }}</span>
+                        <span class="text-xs text-gray-400 truncate">{{ config.space || t('noSpace') }}</span>
+                    </div>
+                    <button @click.stop="deleteModel(id)" class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition">
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <div v-if="sidebarOpen" @click="sidebarOpen = false" class="absolute inset-0 bg-black/50 z-0 md:hidden backdrop-blur-sm transition-opacity"></div>
+
+        <!-- Editor Area -->
+        <main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 relative">
+            <div v-if="selectedId && models[selectedId]" class="max-w-4xl mx-auto pb-20">
+                
+                <!-- ID Editor -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-bold text-primary uppercase flex items-center gap-1">
+                            {{ t('modelId') }} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" v-model="tempId" @change="renameModel" 
+                               class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition font-mono text-lg font-semibold w-full">
+                        <p class="text-xs text-gray-400">{{ t('idHint') }}</p>
+                    </div>
+                </div>
+
+                <!-- Config Form -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Space (Required) -->
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ t('hfSpace') }} <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <i class="ph ph-planet absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                            <input type="text" v-model="models[selectedId].space" 
+                                   :placeholder="t('spacePlaceholder')"
+                                   :class="['w-full pl-10 pr-10 py-2.5 bg-gray-50 dark:bg-gray-900 border rounded-lg focus:ring-2 outline-none transition', !models[selectedId].space ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 dark:border-gray-600 focus:ring-primary focus:border-primary']">
+                            <a v-if="models[selectedId].space" 
+                               :href="getSpaceUrl(models[selectedId].space)" target="_blank"
+                               class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition">
+                                <i class="ph-bold ph-arrow-square-out"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Common String Fields (Optional) -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('apiName') }}</label>
+                        <input type="text" v-model="models[selectedId].api_name" placeholder="/chat"
+                               class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('payloadType') }}</label>
+                        <select v-model="models[selectedId].input_payload_type" 
+                                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition appearance-none">
+                            <option value="str">String (str)</option>
+                            <option value="dict">Dictionary (dict)</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('userParam') }}</label>
+                        <input type="text" v-model="models[selectedId].user_param_name" placeholder="e.g. message"
+                               class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition">
+                    </div>
+
+                    <!-- Toggles -->
+                    <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2 border-t border-b border-gray-100 dark:border-gray-700 py-4">
+                        <div v-for="key in ['enable_system_prompt', 'enable_history', 'enable_streaming']" :key="key"
+                             class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition cursor-pointer"
+                             @click="toggleBool(key)">
+                            <span class="text-sm font-medium">{{ t(key) }}</span>
+                            <div :class="['w-10 h-5 flex items-center rounded-full p-1 transition-colors duration-300', models[selectedId][key] ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600']">
+                                <div :class="['bg-white w-3.5 h-3.5 rounded-full shadow transform duration-300', models[selectedId][key] ? 'translate-x-5' : '']"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Param (Conditional) -->
+                    <div v-if="models[selectedId].enable_system_prompt" class="md:col-span-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('systemParam') }}</label>
+                        <input type="text" v-model="models[selectedId].system_param_name" placeholder="e.g. system_prompt"
+                               class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition">
+                    </div>
+
+                    <!-- Parameter Allowlist (Checkboxes) -->
+                    <div class="md:col-span-2 space-y-3 mt-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('supportedParams') }}</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <label v-for="param in supportedParams" :key="param" 
+                                   class="flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition select-none"
+                                   :class="models[selectedId].parameter_allowlist.includes(param) 
+                                        ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-800' 
+                                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
+                                <input type="checkbox" :value="param" v-model="models[selectedId].parameter_allowlist" class="rounded text-primary focus:ring-primary w-4 h-4">
+                                <span class="text-sm">{{ param }}</span>
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-400">{{ t('paramHint') }}</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Export Modal -->
+    <div v-if="showExportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showExportModal = false"></div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-3xl z-10 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h2 class="font-bold text-lg">{{ t('exportJson') }}</h2>
+                <button @click="showExportModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-hidden relative">
+                <textarea readonly class="w-full h-[60vh] p-4 bg-gray-50 dark:bg-gray-900 font-mono text-sm resize-none outline-none text-gray-700 dark:text-gray-300" :value="jsonOutput"></textarea>
+            </div>
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                <button @click="copyJson" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">{{ copyBtnText }}</button>
+                <button @click="downloadJson" class="px-4 py-2 bg-primary hover:bg-indigo-600 text-white rounded-lg shadow transition flex items-center gap-2">
+                    <i class="ph-bold ph-download-simple"></i> {{ t('download') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    // 预定义的参数列表
+    const SUPPORTED_PARAMS = [
+        "max_new_tokens",
+        "temperature",
+        "top_p",
+        "top_k",
+        "repetition_penalty"
+    ];
+
+    const translations = {
+        en: {
+            title: 'Model Config Editor',
+            importBtn: 'Import JSON',
+            exportJson: 'Export Config',
+            welcomeTitle: 'No Models Loaded',
+            welcomeDesc: 'Import an existing models.json file or start from scratch.',
+            createEmpty: 'Create New',
+            modelsList: 'Models',
+            clearAll: 'Clear All',
+            addModel: 'Add Model',
+            modelId: 'Model ID (Key)',
+            idHint: 'Must be unique.',
+            hfSpace: 'Hugging Face Space ID',
+            spacePlaceholder: 'username/space-name',
+            noSpace: 'No Space ID',
+            apiName: 'API Endpoint',
+            payloadType: 'Payload Type',
+            userParam: 'User Parameter Name',
+            enable_system_prompt: 'System Prompt',
+            enable_history: 'Chat History',
+            enable_streaming: 'Streaming',
+            systemParam: 'System Parameter Name',
+            supportedParams: 'Supported Parameters',
+            paramHint: 'Select parameters supported by this model.',
+            download: 'Download',
+            close: 'Close',
+            copy: 'Copy',
+            copied: 'Copied!'
+        },
+        zh: {
+            title: '模型配置编辑器',
+            importBtn: '导入配置文件',
+            exportJson: '导出配置',
+            welcomeTitle: '暂无模型数据',
+            welcomeDesc: '请导入 models.json 文件或新建一个空白配置。',
+            createEmpty: '新建模型',
+            modelsList: '模型列表',
+            clearAll: '清空所有',
+            addModel: '添加模型',
+            modelId: '模型 ID (Key)',
+            idHint: '必须唯一，用于索引。',
+            hfSpace: 'Hugging Face Space ID',
+            spacePlaceholder: '用户名/空间名',
+            noSpace: '未填写 Space',
+            apiName: 'API 端点',
+            payloadType: '载荷类型',
+            userParam: '用户参数名',
+            enable_system_prompt: '启用系统提示词',
+            enable_history: '启用历史记录',
+            enable_streaming: '启用流式输出',
+            systemParam: '系统参数名',
+            supportedParams: '支持的参数 (勾选)',
+            paramHint: '勾选该模型支持调整的参数。',
+            download: '下载 .json',
+            close: '关闭',
+            copy: '复制代码',
+            copied: '已复制!'
+        }
+    };
+
+    createApp({
+        setup() {
+            const models = ref({});
+            const selectedId = ref(null);
+            const tempId = ref('');
+            const lang = ref('zh');
+            const isDark = ref(false);
+            const sidebarOpen = ref(false);
+            const showExportModal = ref(false);
+            const copyBtnText = ref('');
+            const fileInput = ref(null);
+            const supportedParams = SUPPORTED_PARAMS;
+
+            const t = (key) => translations[lang.value][key] || key;
+
+            onMounted(() => {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) isDark.value = true;
+                updateTheme();
+                copyBtnText.value = t('copy');
+            });
+
+            const hasModels = computed(() => Object.keys(models.value).length > 0);
+
+            const updateTheme = () => {
+                document.documentElement.classList.toggle('dark', isDark.value);
+            };
+
+            const toggleTheme = () => {
+                isDark.value = !isDark.value;
+                updateTheme();
+            };
+
+            const toggleLang = () => {
+                lang.value = lang.value === 'en' ? 'zh' : 'en';
+                copyBtnText.value = t('copy');
+            };
+
+            // File Import
+            const handleFileUpload = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        // Normalize data ensures arrays exist
+                        for (let key in json) {
+                            if (!json[key].parameter_allowlist) json[key].parameter_allowlist = [];
+                        }
+                        models.value = json;
+                        if (Object.keys(json).length > 0) {
+                            selectModel(Object.keys(json)[0]);
+                        }
+                    } catch (err) {
+                        alert('Invalid JSON file');
+                    }
+                    event.target.value = ''; // Reset input
+                };
+                reader.readAsText(file);
+            };
+
+            const addNewModel = () => {
+                const id = `model-${Object.keys(models.value).length + 1}`;
+                models.value[id] = {
+                    space: "",
+                    api_name: "/chat",
+                    input_payload_type: "str",
+                    user_param_name: "message",
+                    enable_system_prompt: false,
+                    system_param_name: null,
+                    enable_history: false,
+                    enable_streaming: false,
+                    parameter_allowlist: []
+                };
+                selectModel(id);
+            };
+
+            const selectModel = (id) => {
+                selectedId.value = id;
+                tempId.value = id;
+                sidebarOpen.value = false;
+            };
+
+            const renameModel = () => {
+                const oldKey = selectedId.value;
+                const newKey = tempId.value.trim();
+                if (!newKey || newKey === oldKey) return;
+                if (models.value[newKey]) {
+                    alert('ID exists!');
+                    tempId.value = oldKey;
+                    return;
+                }
+                const newModels = {};
+                for (const key in models.value) {
+                    if (key === oldKey) newModels[newKey] = models.value[oldKey];
+                    else newModels[key] = models.value[key];
+                }
+                models.value = newModels;
+                selectedId.value = newKey;
+            };
+
+            const deleteModel = (id) => {
+                if (confirm('Delete this model?')) {
+                    delete models.value[id];
+                    if (selectedId.value === id) {
+                        const keys = Object.keys(models.value);
+                        selectedId.value = keys.length ? keys[0] : null;
+                    }
+                }
+            };
+
+            const clearAll = () => {
+                if (confirm('Clear all data?')) {
+                    models.value = {};
+                    selectedId.value = null;
+                }
+            };
+
+            const toggleBool = (key) => {
+                models.value[selectedId.value][key] = !models.value[selectedId.value][key];
+            };
+
+            const getSpaceUrl = (space) => {
+                if (!space) return '#';
+                try { new URL(space); return space; } catch (_) { return `https://huggingface.co/spaces/${space}`; }
+            };
+
+            // Custom JSON Generation Logic (Clean Output)
+            const jsonOutput = computed(() => {
+                const cleanData = {};
+                for (const [key, config] of Object.entries(models.value)) {
+                    // Skip if Space ID is missing (Required field)
+                    if (!config.space) continue;
+
+                    const entry = {};
+                    // Required
+                    entry.space = config.space;
+                    
+                    // Optionals (Only include if truthy/not empty)
+                    if (config.api_name) entry.api_name = config.api_name;
+                    if (config.input_payload_type) entry.input_payload_type = config.input_payload_type;
+                    if (config.user_param_name) entry.user_param_name = config.user_param_name;
+                    
+                    // Booleans: Only include if true
+                    if (config.enable_system_prompt) {
+                        entry.enable_system_prompt = true;
+                        if (config.system_param_name) entry.system_param_name = config.system_param_name;
+                    }
+                    if (config.enable_history) entry.enable_history = true;
+                    if (config.enable_streaming) entry.enable_streaming = true;
+
+                    // Array: Only include if has items
+                    if (config.parameter_allowlist && config.parameter_allowlist.length > 0) {
+                        entry.parameter_allowlist = config.parameter_allowlist;
+                    } else if (config.parameter_allowlist) {
+                         // User asked to mimic sample: explicit empty array is shown in sample?
+                         // Sample has "parameter_allowlist": [] for qwen. 
+                         // So we KEEP empty array if it exists.
+                         entry.parameter_allowlist = [];
+                    }
+
+                    cleanData[key] = entry;
+                }
+                return JSON.stringify(cleanData, null, 2);
+            });
+
+            const copyJson = () => {
+                navigator.clipboard.writeText(jsonOutput.value);
+                copyBtnText.value = t('copied');
+                setTimeout(() => copyBtnText.value = t('copy'), 2000);
+            };
+
+            const downloadJson = () => {
+                const blob = new Blob([jsonOutput.value], {type: "application/json"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "models.json";
+                a.click();
+            };
+
+            return {
+                models, selectedId, tempId, lang, isDark, sidebarOpen, showExportModal,
+                hasModels, supportedParams, jsonOutput, copyBtnText, fileInput,
+                t, toggleTheme, toggleLang, handleFileUpload, addNewModel, selectModel,
+                renameModel, deleteModel, clearAll, toggleBool, getSpaceUrl, copyJson, downloadJson
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

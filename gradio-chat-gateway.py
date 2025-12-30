@@ -225,9 +225,7 @@ async def create_chat_completion(
 
     # 处理 reasoning_effort 并拼接至 system_prompt
     if request.reasoning_effort:
-        if not system_prompt.rstrip().endswith(('.', '!', '?', '。')):
-            system_prompt = system_prompt.strip() + "."
-        system_prompt += f" Reasoning: {request.reasoning_effort}"
+        system_prompt += f"], [Reasoning:{request.reasoning_effort}"
 
     async def do_predict(token: Optional[str]):
         client = get_gradio_client(request.model, token)

@@ -237,7 +237,7 @@ async def create_chat_completion(
         
         enable_sys = model_conf.get("enable_system_prompt", False)
         if not enable_sys:
-            final_user_input = f"[[system:{system_prompt}],[user:{user_input}]]"
+            final_user_input = f"[[system:{system_prompt}], [{user_input}]]"
         else:
             final_user_input = user_input
         

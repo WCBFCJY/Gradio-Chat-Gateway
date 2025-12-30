@@ -116,7 +116,7 @@ class ChatCompletionRequest(BaseModel):
     top_k: Optional[int] = 50
     repetition_penalty: Optional[float] = 1.0
     stream: Optional[bool] = False
-    reasoning_effort: Optional[str] = "default"
+    reasoning_effort: Optional[str] = None
 
 def real_streaming(job, model_name):
     """

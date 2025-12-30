@@ -213,7 +213,7 @@ async def create_chat_completion(
             system_prompt = msg.content
             break
 
-    if model_conf.get("enable_history", True):
+    if model_conf.get("enable_history", False):
         for msg in request.messages:
             if msg.role == "user":
                 user_input += f"User: {msg.content}\n"

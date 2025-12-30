@@ -117,6 +117,7 @@ class ChatCompletionRequest(BaseModel):
     repetition_penalty: Optional[float] = 1.0
     stream: Optional[bool] = False
     reasoning_effort: Optional[str] = None
+    enable_thinking: Optional[bool] = False
 
 def real_streaming(job, model_name):
     """
@@ -223,9 +224,12 @@ async def create_chat_completion(
         last_user_msg = next((m for m in reversed(request.messages) if m.role == "user"), None)
         user_input = last_user_msg.content
 
-    # 处理 reasoning_effort 并拼接至 system_prompt
+    # 处理 reasoning_effort
     if request.reasoning_effort:
         system_prompt += f"], [Reasoning:{request.reasoning_effort}"
+    else:
+        if request.enable_thinking:
+            request.reasoning_effort = "medium"
 
     async def do_predict(token: Optional[str]):
         client = get_gradio_client(request.model, token)

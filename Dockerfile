@@ -1,24 +1,17 @@
-FROM python:3.10-slim as builder
-
-WORKDIR /app
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc g++ && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-
-RUN pip install --prefix=/install --no-cache-dir --no-warn-script-location -r requirements.txt
-
 FROM python:3.10-slim
 
 ARG TARGETARCH
 
 WORKDIR /app
 
-COPY --from=builder /install /usr/local
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir --no-warn-script-location -r requirements.txt
+
+RUN pip install --no-cache-dir --no-warn-script-location uvloop
 
 COPY gradio-chat-gateway.py .
+
 COPY models.json .
 
 RUN useradd -m -u 1000 appuser && \

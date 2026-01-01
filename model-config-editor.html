@@ -24,6 +24,7 @@
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .drag-over { border-color: #6366f1 !important; background-color: rgba(99, 102, 241, 0.05); }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 font-sans h-screen overflow-hidden">
@@ -71,6 +72,17 @@
         </div>
         <h2 class="text-2xl font-bold mb-2">{{ t('welcomeTitle') }}</h2>
         <p class="text-gray-500 dark:text-gray-400 max-w-md mb-8">{{ t('welcomeDesc') }}</p>
+        
+        <!-- Drag & Drop Area -->
+        <div 
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="handleFileDrop"
+            :class="['w-full max-w-md p-8 mb-6 border-2 border-dashed rounded-xl transition-all', isDragging ? 'drag-over border-primary' : 'border-gray-300 dark:border-gray-600']">
+            <i class="ph-duotone ph-upload-simple text-4xl text-gray-400 mb-3"></i>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('dragDropHint') }}</p>
+        </div>
+        
         <div class="flex gap-4">
             <button @click="$refs.fileInput.click()" class="px-6 py-3 bg-primary hover:bg-indigo-600 text-white rounded-xl shadow-lg transition font-medium flex items-center gap-2">
                 <i class="ph-bold ph-upload"></i> {{ t('importBtn') }}
@@ -104,7 +116,7 @@
                      :class="['group flex items-center justify-between p-3 rounded-lg cursor-pointer transition border', selectedId === id ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-primary' : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50']">
                     <div class="flex flex-col overflow-hidden">
                         <span class="truncate font-medium text-sm">{{ id }}</span>
-                        <span class="text-xs text-gray-400 truncate">{{ config.space || t('noSpace') }}</span>
+                        <span class="text-xs text-gray-400 truncate">{{ getDisplaySpace(config) || t('noSpace') }}</span>
                     </div>
                     <button @click.stop="deleteModel(id)" class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition">
                         <i class="ph-bold ph-x"></i>
@@ -134,24 +146,37 @@
                 <!-- Config Form -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     
-                    <!-- Space (Required) -->
+                    <!-- Platform Type Selection -->
                     <div class="md:col-span-2 space-y-2">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {{ t('hfSpace') }} <span class="text-red-500">*</span>
+                            {{ t('platformType') }} <span class="text-red-500">*</span>
+                        </label>
+                        <select v-model="models[selectedId].platform_type" 
+                                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition">
+                            <option value="huggingface">Hugging Face Spaces</option>
+                            <option value="modelscope">ModelScope Spaces</option>
+                            <option value="gradio">Gradio Completions API</option>
+                        </select>
+                    </div>
+
+                    <!-- Space Input (Dynamic Label) -->
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ getSpaceLabel() }} <span class="text-red-500">*</span>
                         </label>
                         <div class="relative">
                             <i class="ph ph-planet absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                            <input type="text" v-model="models[selectedId].space" 
-                                   :placeholder="t('spacePlaceholder')"
-                                   :class="['w-full pl-10 pr-10 py-2.5 bg-gray-50 dark:bg-gray-900 border rounded-lg focus:ring-2 outline-none transition', !models[selectedId].space ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 dark:border-gray-600 focus:ring-primary focus:border-primary']">
-                            <a v-if="models[selectedId].space" 
-                               :href="getSpaceUrl(models[selectedId].space)" target="_blank"
+                            <input type="text" v-model="models[selectedId].space_input" 
+                                   :placeholder="getSpacePlaceholder()"
+                                   :class="['w-full pl-10 pr-10 py-2.5 bg-gray-50 dark:bg-gray-900 border rounded-lg focus:ring-2 outline-none transition', !models[selectedId].space_input ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 dark:border-gray-600 focus:ring-primary focus:border-primary']">
+                            <a v-if="models[selectedId].space_input" 
+                               :href="getPreviewUrl()" target="_blank"
                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition">
                                 <i class="ph-bold ph-arrow-square-out"></i>
                             </a>
                         </div>
                         <p class="text-xs text-blue-500 dark:text-blue-400 flex items-center gap-1">
-                            <i class="ph-fill ph-info"></i> {{ t('spaceHint') }}
+                            <i class="ph-fill ph-info"></i> {{ getSpaceHint() }}
                         </p>
                     </div>
 
@@ -243,13 +268,13 @@
 <script>
     const { createApp, ref, computed, onMounted } = Vue;
 
-    // 预定义的参数列表
     const SUPPORTED_PARAMS = [
         "max_new_tokens",
         "temperature",
         "top_p",
         "top_k",
-        "repetition_penalty"
+        "repetition_penalty",
+		"reasoning_effort"
     ];
 
     const translations = {
@@ -259,16 +284,24 @@
             exportJson: 'Export',
             welcomeTitle: 'No Models Loaded',
             welcomeDesc: 'Import an existing models.json file or start from scratch.',
+            dragDropHint: 'Drag & drop JSON file here',
             createEmpty: 'Create New',
             modelsList: 'Models',
             clearAll: 'Clear All',
             addModel: 'Add Model',
             modelId: 'Model ID',
             idHint: 'Must be unique.',
+            platformType: 'Platform',
             hfSpace: 'Space ID',
+            msSpace: 'ModelScope Space ID',
+            gradioUrl: 'Gradio API URL',
             spacePlaceholder: 'username/space-name OR https://...',
-			spaceHint: 'Enter Space ID (e.g. openai/gpt2) or full URL.',
-            noSpace: 'No Space ID',
+            spaceHint: 'Enter Space ID (e.g. openai/gpt2) or full URL.',
+            msSpacePlaceholder: 'username/space-name OR https://...',
+            msSpaceHint: 'Enter ModelScope Space ID (e.g. openai/gpt2) or full URL.',
+            gradioUrlPlaceholder: 'e.g. https://your-api.com',
+            gradioUrlHint: 'Enter full Gradio Completions API URL (e.g. https://your-api.com)',
+            noSpace: 'None',
             apiName: 'API Endpoint',
             payloadType: 'Payload Type',
             userParam: 'User Parameter Name',
@@ -289,25 +322,33 @@
             exportJson: '导出',
             welcomeTitle: '暂无模型数据',
             welcomeDesc: '请导入 models.json 文件或新建一个空白配置。',
+            dragDropHint: '拖拽 JSON 文件到此处',
             createEmpty: '新建模型',
             modelsList: '模型列表',
             clearAll: '清空所有',
             addModel: '添加模型',
             modelId: '模型 ID',
             idHint: '必须唯一，用于索引。',
+            platformType: '供应商',
             hfSpace: 'Space ID',
+            msSpace: 'ModelScope Space ID',
+            gradioUrl: 'Gradio API URL',
             spacePlaceholder: '用户名/空间名 或 完整URL',
             spaceHint: '输入 Space ID (如 openai/gpt2) 或完整链接。',
-            noSpace: '未填写 Space',
+            msSpacePlaceholder: '用户名/空间名 或 完整URL',
+            msSpaceHint: '输入 ModelScope Space ID (如 openai/gpt2) 或完整链接。',
+            gradioUrlPlaceholder: 'e.g. https://your-api.com',
+            gradioUrlHint: '输入完整的 Gradio Completions API 地址 (如: https://your-api.com)',
+            noSpace: '未配置',
             apiName: 'API 端点',
-            payloadType: '载荷类型',
+            payloadType: '数据类型',
             userParam: 'User 参数名',
             enable_system_prompt: '启用系统提示词',
             enable_history: '发送历史消息',
             enable_streaming: '启用流式输出',
             systemParam: 'System 参数名',
             supportedParams: '支持的参数 (勾选)',
-            paramHint: '请根据模型API文档勾选该模型支持调整的参数，如错误配置会导致调用失败。',
+            paramHint: '请根据模型API文档勾选该模型支持调整的参数，错误配置可能会导致调用失败。',
             download: '下载',
             close: '关闭',
             copy: '复制',
@@ -322,6 +363,7 @@
             const tempId = ref('');
             const lang = ref('zh');
             const isDark = ref(false);
+            const isDragging = ref(false);
             const sidebarOpen = ref(false);
             const showExportModal = ref(false);
             const copyBtnText = ref('');
@@ -352,17 +394,45 @@
                 copyBtnText.value = t('copy');
             };
 
-            // File Import
+            const handleFileDrop = (event) => {
+                isDragging.value = false;
+                const file = event.dataTransfer.files[0];
+                if (file && file.type === 'application/json') {
+                    processJsonFile(file);
+                }
+            };
+
             const handleFileUpload = (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
+                processJsonFile(file);
+                event.target.value = ''; // Reset input
+            };
+
+            const processJsonFile = (file) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
                         const json = JSON.parse(e.target.result);
-                        // Normalize data ensures arrays exist
                         for (let key in json) {
                             if (!json[key].parameter_allowlist) json[key].parameter_allowlist = [];
+                            
+                            const space = json[key].space || '';
+                            if (!json[key].platform_type) {
+                                if (space.includes('.ms.show')) {
+                                    json[key].platform_type = 'modelscope';
+                                    json[key].space_input = space;
+                                } else if (space.startsWith('http://') || space.startsWith('https://'))
+{
+                                    json[key].platform_type = 'gradio';
+                                    json[key].space_input = space;
+                                } else {
+                                    json[key].platform_type = 'huggingface';
+                                    json[key].space_input = space;
+                                }
+                            } else {
+                                json[key].space_input = space;
+                            }
                         }
                         models.value = json;
                         if (Object.keys(json).length > 0) {
@@ -371,7 +441,6 @@
                     } catch (err) {
                         alert('Invalid JSON file');
                     }
-                    event.target.value = ''; // Reset input
                 };
                 reader.readAsText(file);
             };
@@ -379,7 +448,8 @@
             const addNewModel = () => {
                 const id = `model-${Object.keys(models.value).length + 1}`;
                 models.value[id] = {
-                    space: "",
+                    platform_type: "huggingface",
+                    space_input: "",
                     api_name: "/chat",
                     input_payload_type: "str",
                     user_param_name: "message",
@@ -414,6 +484,7 @@
                 }
                 models.value = newModels;
                 selectedId.value = newKey;
+                tempId.value = newKey;
             };
 
             const deleteModel = (id) => {
@@ -421,7 +492,13 @@
                     delete models.value[id];
                     if (selectedId.value === id) {
                         const keys = Object.keys(models.value);
-                        selectedId.value = keys.length ? keys[0] : null;
+                        if (keys.length > 0) {
+                            selectedId.value = keys[0];
+                            tempId.value = keys[0];
+                        } else {
+                            selectedId.value = null;
+                            tempId.value = '';
+                        }
                     }
                 }
             };
@@ -430,6 +507,7 @@
                 if (confirm('Clear all data?')) {
                     models.value = {};
                     selectedId.value = null;
+                    tempId.value = '';
                 }
             };
 
@@ -437,28 +515,89 @@
                 models.value[selectedId.value][key] = !models.value[selectedId.value][key];
             };
 
-            const getSpaceUrl = (space) => {
-                if (!space) return '#';
-                try { new URL(space); return space; } catch (_) { return `https://huggingface.co/spaces/${space}`; }
+            const modelscopeSpaceToUrl = (spaceId) => {
+                const normalized = spaceId.toLowerCase().replace(/\//g, '-').replace(/_/g, '-');
+                return `https://${normalized}.ms.show`;
             };
 
-            // Custom JSON Generation Logic (Clean Output)
+            const getDisplaySpace = (config) => {
+                return config.space_input || '';
+            };
+
+            const getPreviewUrl = () => {
+                const config = models.value[selectedId.value];
+                if (!config || !config.space_input) return '#';
+                
+                const platformType = config.platform_type || 'huggingface';
+                const input = config.space_input;
+                
+                if (platformType === 'modelscope') {
+                    if (input.startsWith('http://') || input.startsWith('https://')) {
+                        return input;
+                    }
+                    return modelscopeSpaceToUrl(input);
+                } else if (platformType === 'gradio') {
+                    return input;
+                } else {
+                    if (input.startsWith('http://') || input.startsWith('https://')) {
+                        return input;
+                    }
+                    return `https://huggingface.co/spaces/${input}`;
+                }
+            };
+
+            const getSpaceLabel = () => {
+                const config = models.value[selectedId.value];
+                if (!config) return t('hfSpace');
+                
+                const platformType = config.platform_type || 'huggingface';
+                if (platformType === 'modelscope') return t('msSpace');
+                if (platformType === 'gradio') return t('gradioUrl');
+                return t('hfSpace');
+            };
+
+            const getSpacePlaceholder = () => {
+                const config = models.value[selectedId.value];
+                if (!config) return t('spacePlaceholder');
+                
+                const platformType = config.platform_type || 'huggingface';
+                if (platformType === 'modelscope') return t('msSpacePlaceholder');
+                if (platformType === 'gradio') return t('gradioUrlPlaceholder');
+                return t('spacePlaceholder');
+            };
+
+            const getSpaceHint = () => {
+                const config = models.value[selectedId.value];
+                if (!config) return t('spaceHint');
+                
+                const platformType = config.platform_type || 'huggingface';
+                if (platformType === 'modelscope') return t('msSpaceHint');
+                if (platformType === 'gradio') return t('gradioUrlHint');
+                return t('spaceHint');
+            };
+
             const jsonOutput = computed(() => {
                 const cleanData = {};
                 for (const [key, config] of Object.entries(models.value)) {
-                    // Skip if Space ID is missing (Required field)
-                    if (!config.space) continue;
+                    if (!config.space_input) continue;
 
                     const entry = {};
-                    // Required
-                    entry.space = config.space;
                     
-                    // Optionals (Only include if truthy/not empty)
+                    const platformType = config.platform_type || 'huggingface';
+                    if (platformType === 'modelscope') {
+                        if (config.space_input.startsWith('http://') || config.space_input.startsWith('https://')) {
+                            entry.space = config.space_input;
+                        } else {
+                            entry.space = modelscopeSpaceToUrl(config.space_input);
+                        }
+                    } else {
+                        entry.space = config.space_input;
+                    }
+                    
                     if (config.api_name) entry.api_name = config.api_name;
                     if (config.input_payload_type) entry.input_payload_type = config.input_payload_type;
                     if (config.user_param_name) entry.user_param_name = config.user_param_name;
                     
-                    // Booleans: Only include if true
                     if (config.enable_system_prompt) {
                         entry.enable_system_prompt = true;
                         if (config.system_param_name) entry.system_param_name = config.system_param_name;
@@ -466,13 +605,9 @@
                     if (config.enable_history) entry.enable_history = true;
                     if (config.enable_streaming) entry.enable_streaming = true;
 
-                    // Array: Only include if has items
                     if (config.parameter_allowlist && config.parameter_allowlist.length > 0) {
                         entry.parameter_allowlist = config.parameter_allowlist;
                     } else if (config.parameter_allowlist) {
-                         // User asked to mimic sample: explicit empty array is shown in sample?
-                         // Sample has "parameter_allowlist": [] for qwen. 
-                         // So we KEEP empty array if it exists.
                          entry.parameter_allowlist = [];
                     }
 
@@ -497,10 +632,11 @@
             };
 
             return {
-                models, selectedId, tempId, lang, isDark, sidebarOpen, showExportModal,
+                models, selectedId, tempId, lang, isDark, isDragging, sidebarOpen, showExportModal,
                 hasModels, supportedParams, jsonOutput, copyBtnText, fileInput,
-                t, toggleTheme, toggleLang, handleFileUpload, addNewModel, selectModel,
-                renameModel, deleteModel, clearAll, toggleBool, getSpaceUrl, copyJson, downloadJson
+                t, toggleTheme, toggleLang, handleFileUpload, handleFileDrop, addNewModel, selectModel,
+                renameModel, deleteModel, clearAll, toggleBool, getDisplaySpace, getPreviewUrl,
+                getSpaceLabel, getSpacePlaceholder, getSpaceHint, copyJson, downloadJson
             };
         }
     }).mount('#app');

@@ -225,8 +225,8 @@ async def create_chat_completion(
         user_input = last_user_msg.content
 
     # 处理 reasoning_effort
-    if not request.reasoning_effort:
-        if request.enable_thinking:
+    if request.enable_thinking:
+        if not request.reasoning_effort:
             request.reasoning_effort = "auto"
 
     if not model_conf.get("reasoning_effort"):

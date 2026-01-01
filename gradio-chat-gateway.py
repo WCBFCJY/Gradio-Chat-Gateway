@@ -343,5 +343,9 @@ async def create_chat_completion(
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
+    import sys
     import uvicorn
-    uvicorn.run(app, host=LISTEN, port=PORT)
+    if sys.platform == "win32":
+        uvicorn.run(app, host=LISTEN, port=PORT, loop="asyncio")
+    else:
+        uvicorn.run(app, host=LISTEN, port=PORT, loop="uvloop")

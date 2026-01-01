@@ -225,11 +225,13 @@ async def create_chat_completion(
         user_input = last_user_msg.content
 
     # 处理 reasoning_effort
-    if request.reasoning_effort:
-        system_prompt += f"], [Reasoning:{request.reasoning_effort}"
-    else:
+    if not request.reasoning_effort:
         if request.enable_thinking:
-            request.reasoning_effort = "medium"
+            request.reasoning_effort = "auto"
+
+    if not model_conf.get("reasoning_effort"):
+        if request.reasoning_effort:
+            system_prompt += f".  (/think Reasoning:{request.reasoning_effort})"
 
     async def do_predict(token: Optional[str]):
         client = get_gradio_client(request.model, token)
